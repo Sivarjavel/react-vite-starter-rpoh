@@ -2,6 +2,7 @@ body {
   margin: 0;
   background: #111;
   font-family: Arial, sans-serif;
+  color: white;
 }
 
 .app {
@@ -10,34 +11,39 @@ body {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  color: white;
+  text-align: center;
 }
 
-.listener {
+.listener-ui {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .dot {
-  width: 25px;   /* 🔥 bigger dots */
+  width: 25px;
   height: 25px;
   border-radius: 50%;
   background: red;
   opacity: 0.6;
-  transition: transform 0.1s ease, opacity 0.1s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .center {
-  width: 35px;   /* 🔥 bigger center */
+  width: 35px;
   height: 35px;
   opacity: 1;
 }
 
+.active {
+  transform: scale(2.5);
+  opacity: 1;
+}
+
 button {
-  margin: 5px;
+  margin: 10px;
   padding: 14px 28px;
   border: none;
   border-radius: 25px;
@@ -53,13 +59,17 @@ button:hover {
   background: #d62839;
 }
 
-.player {
-  margin-top: 20px;
-  text-align: center;
+.transcript-box {
+  margin-top: 30px;
+  width: 80%;
+  max-width: 600px;
+  background: #222;
+  padding: 20px;
+  border-radius: 12px;
+  min-height: 80px;
 }
 
-audio {
-  margin-top: 10px;
-  outline: none;
-  width: 250px;
+.transcript-box p {
+  font-size: 18px;
+  line-height: 1.5;
 }
