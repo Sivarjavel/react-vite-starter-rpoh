@@ -1,18 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 
 function App() {
   const dotsRef = useRef([]);
   const [listening, setListening] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
-  let audioContext, analyser, microphone, dataArray, animationId;
-  let mediaRecorder;
-  let audioChunks = [];
+
+  const audioChunksRef = useRef([]);
+  const mediaRecorderRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const microphoneRef = useRef(null);
+  const animationIdRef = useRef(null);
 
   const animateDots = (volume) => {
     dotsRef.current.forEach((dot, i) => {
-      let scale = 1 + volume * (i + 1) * 0.2; // 🔥 stronger wave
-      scale = Math.min(scale, 4); // limit max growth
+      let scale = 1 + volume * (i + 1) * 0.2; // stronger wave
+      scale = Math.min(scale, 4);
       dot.style.transform = `scale(${scale})`;
       dot.style.opacity = Math.min(1, 0.5 + volume / 80);
     });
@@ -20,53 +24,74 @@ function App() {
 
   const startListening = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    microphone = audioContext.createMediaStreamSource(stream);
+
+    // Setup Audio Context
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(stream);
     microphone.connect(analyser);
-    dataArray = new Uint8Array(analyser.fftSize);
 
-    // setup recording
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunks.push(e.data);
-    };
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(audioChunks, { type: "audio/webm" });
-      const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
-    };
-    mediaRecorder.start();
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    microphoneRef.current = microphone;
 
-    function draw() {
+    const dataArray = new Uint8Array(analyser.fftSize);
+
+    // Animate dots
+    const draw = () => {
       analyser.getByteFrequencyData(dataArray);
       let volume = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      animateDots(volume / 10); // normalized bigger
-      animationId = requestAnimationFrame(draw);
-    }
+      animateDots(volume / 10);
+      animationIdRef.current = requestAnimationFrame(draw);
+    };
     draw();
 
+    // Setup recorder
+    audioChunksRef.current = [];
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url); // 🔥 ensure url is set after stop
+    };
+
+    mediaRecorder.start();
     setListening(true);
   };
 
   const stopListening = () => {
-    if (animationId) cancelAnimationFrame(animationId);
-    if (audioContext) audioContext.close();
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.stop();
+    // Stop animation
+    if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
+
+    // Stop media recorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
     }
+
+    // Stop audio context (after stopping recorder)
+    setTimeout(() => {
+      if (audioContextRef.current) audioContextRef.current.close();
+    }, 500);
+
+    // Reset dots
     dotsRef.current.forEach((dot) => {
       dot.style.transform = "scale(1)";
       dot.style.opacity = "0.6";
     });
+
     setListening(false);
   };
 
   return (
     <div className="app">
       <div className="listener">
-        {[...Array(7)].map((_, i) => ( // 🔥 increased from 5 → 7 dots
+        {[...Array(7)].map((_, i) => (
           <span
             key={i}
             ref={(el) => (dotsRef.current[i] = el)}
@@ -83,7 +108,7 @@ function App() {
 
       {audioUrl && (
         <div className="player">
-          <h3>▶️ Your Recording</h3>
+          <h3>▶️ Playback</h3>
           <audio controls src={audioUrl}></audio>
         </div>
       )}
