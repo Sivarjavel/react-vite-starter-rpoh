@@ -1,114 +1,69 @@
-import React, { useState, useRef } from "react";
-import { WaveSurfer, WaveForm } from "wavesurfer-react";
-import PitchShift from "soundtouchjs";
+// src/App.jsx
+import { useEffect, useRef, useState } from "react";
+import "./App.css";
 
-export default function App() {
-  const [recording, setRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [wavesurfer, setWavesurfer] = useState(null);
-  const mediaRecorderRef = useRef(null);
-  const chunks = useRef([]);
+function App() {
+  const dotsRef = useRef([]);
+  const [listening, setListening] = useState(false);
+  let audioContext, analyser, microphone, dataArray, animationId;
 
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    chunks.current = [];
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.current.push(e.data);
-      }
-    };
-    mediaRecorderRef.current.onstop = async () => {
-      const blob = new Blob(chunks.current, { type: "audio/webm" });
-      const url = URL.createObjectURL(blob);
-
-      // ---- Convert male → female (pitch shift) ----
-      const arrayBuffer = await blob.arrayBuffer();
-      const audioCtx = new AudioContext();
-      const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-
-      // Pitch shift by ~ +4 semitones (female-ish)
-      const pitchShifter = new PitchShift(audioCtx);
-      const source = audioCtx.createBufferSource();
-      source.buffer = decoded;
-      source.connect(pitchShifter.input);
-      pitchShifter.transpose = 4; // semitone up
-      pitchShifter.connect(audioCtx.destination);
-
-      setAudioUrl(url);
-    };
-
-    mediaRecorderRef.current.start();
-    setRecording(true);
+  const animateDots = (volume) => {
+    dotsRef.current.forEach((dot, i) => {
+      let scale = 1 + volume * (i + 1) * 0.1;
+      scale = Math.min(scale, 3);
+      dot.style.transform = `scale(${scale})`;
+      dot.style.opacity = Math.min(1, 0.5 + volume / 100);
+    });
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current.stop();
-    setRecording(false);
+  const startListening = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      dataArray = new Uint8Array(analyser.fftSize);
+
+      function draw() {
+        analyser.getByteFrequencyData(dataArray);
+        let volume = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        animateDots(volume / 20);
+        animationId = requestAnimationFrame(draw);
+      }
+      draw();
+    });
+    setListening(true);
+  };
+
+  const stopListening = () => {
+    if (animationId) cancelAnimationFrame(animationId);
+    if (audioContext) audioContext.close();
+    dotsRef.current.forEach((dot) => {
+      dot.style.transform = "scale(1)";
+      dot.style.opacity = "0.6";
+    });
+    setListening(false);
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px", fontFamily: "Arial" }}>
-      <h1 style={{ marginBottom: "20px" }}>🎤 Voice Recorder</h1>
+    <div className="app">
+      <div className="listener">
+        {[...Array(5)].map((_, i) => (
+          <span
+            key={i}
+            ref={(el) => (dotsRef.current[i] = el)}
+            className={`dot ${i === 2 ? "center" : ""}`}
+          ></span>
+        ))}
+      </div>
 
-      {!recording ? (
-        <button
-          onClick={startRecording}
-          style={{
-            padding: "15px 30px",
-            background: "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: "30px",
-            fontSize: "18px",
-            cursor: "pointer",
-            boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-          }}
-        >
-          ▶ Start Recording
-        </button>
+      {!listening ? (
+        <button onClick={startListening}>🎤 Start Listening</button>
       ) : (
-        <button
-          onClick={stopRecording}
-          style={{
-            padding: "15px 30px",
-            background: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: "30px",
-            fontSize: "18px",
-            cursor: "pointer",
-            boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-          }}
-        >
-          ⏹ Stop Recording
-        </button>
-      )}
-
-      {audioUrl && (
-        <div style={{ marginTop: "40px" }}>
-          <h3>🔊 Playback (Female Voice)</h3>
-          <WaveSurfer onMount={setWavesurfer}>
-            <WaveForm
-              id="waveform"
-              barWidth={3}
-              barHeight={1}
-              barGap={2}
-              cursorWidth={2}
-              progressColor="#007bff"
-              responsive={true}
-              waveColor="#ccc"
-            />
-          </WaveSurfer>
-          <audio
-            src={audioUrl}
-            controls
-            style={{ marginTop: "20px", width: "100%" }}
-            onPlay={() => wavesurfer && wavesurfer.play()}
-            onPause={() => wavesurfer && wavesurfer.pause()}
-          />
-        </div>
+        <button onClick={stopListening}>⏹ Stop Listening</button>
       )}
     </div>
   );
 }
+
+export default App;
