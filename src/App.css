@@ -1,42 +1,52 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+body {
+  margin: 0;
+  background: #111;
+  font-family: Arial, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.listener {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 40px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: red;
+  opacity: 0.6;
+  transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
-.card {
-  padding: 2em;
+.center {
+  width: 20px;
+  height: 20px;
+  opacity: 1;
 }
 
-.read-the-docs {
-  color: #888;
+button {
+  margin: 5px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  background: #333;
+  color: white;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #444;
 }
