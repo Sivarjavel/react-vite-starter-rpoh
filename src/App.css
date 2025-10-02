@@ -1,0 +1,75 @@
+body {
+  margin: 0;
+  background: #111;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.listener-ui {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dot {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: red;
+  opacity: 0.6;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.center {
+  width: 35px;
+  height: 35px;
+  opacity: 1;
+}
+
+.active {
+  transform: scale(2.5);
+  opacity: 1;
+}
+
+button {
+  margin: 10px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 25px;
+  font-size: 18px;
+  cursor: pointer;
+  background: #e63946;
+  color: white;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #d62839;
+}
+
+.transcript-box {
+  margin-top: 30px;
+  width: 80%;
+  max-width: 600px;
+  background: #222;
+  padding: 20px;
+  border-radius: 12px;
+  min-height: 80px;
+}
+
+.transcript-box p {
+  font-size: 18px;
+  line-height: 1.5;
+}
